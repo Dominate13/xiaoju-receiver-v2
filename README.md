@@ -144,9 +144,11 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8100
 ---
 ### 项目截图
 
-| 管理后台 | 订单查询 | 映射管理 |
-|:---:|:---:|:---:|
-| ![管理后台](https://github.com/user-attachments/assets/b335dcce-7cbe-414b-b6f5-7986518bd9dc) | ![订单查询](https://github.com/user-attachments/assets/c47918d1-1bf9-4bfa-afe1-27ad1c455026) | ![映射管理](https://github.com/user-attachments/assets/9f095e8b-7f52-40e6-b9bd-38bd362529df) |
+<img width="1200" height="973" alt="管理后台1" src="https://github.com/user-attachments/assets/f3fb222c-9898-4fc9-a7fc-7180017a59e7" />
+
+<img width="1200" height="963" alt="订单查询1" src="https://github.com/user-attachments/assets/640b1a65-b47e-4d37-bde3-919cfd7d2f7e" />
+
+<img width="1200" height="946" alt="映射管理1" src="https://github.com/user-attachments/assets/91562323-9c5a-4a12-9b78-3f2b35e84d89" />
 
 > 截图说明：管理后台可查看运行状态与同步状态；订单查询支持按条件筛选；映射管理用于关联充电枪与场站。
 
