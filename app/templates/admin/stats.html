@@ -1,0 +1,141 @@
+{% extends "admin/base.html" %}
+
+{% block title %}统计报表 - 小桔充电管理后台{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>同步趋势（近30天）</h2>
+    <div id="trend-chart" style="height: 300px; display: flex; align-items: flex-end; gap: 5px; padding: 20px 0;">
+        <p style="color: #999; width: 100%; text-align: center;">加载中...</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card success">
+        <div class="number" id="total-success">-</div>
+        <div class="label">累计成功</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="number" id="total-failed">-</div>
+        <div class="label">累计失败</div>
+    </div>
+    <div class="stat-card">
+        <div class="number" id="success-rate">-</div>
+        <div class="label">成功率</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>失败原因分类</h2>
+    <div id="error-stats">
+        <p style="color: #999; text-align: center;">加载中...</p>
+    </div>
+</div>
+
+<script>
+    // 解析后端数据
+    const dailyStats = {{ daily_stats | safe }};
+    const errorStats = {{ error_stats | safe }};
+    
+    // 渲染趋势图
+    function renderTrendChart() {
+        const container = document.getElementById('trend-chart');
+        
+        if (!dailyStats || Object.keys(dailyStats).length === 0) {
+            container.innerHTML = '<p style="color: #999; width: 100%; text-align: center;">暂无数据</p>';
+            return;
+        }
+        
+        // 计算最大值
+        let maxValue = 0;
+        Object.values(dailyStats).forEach(item => {
+            maxValue = Math.max(maxValue, item.success, item.failed);
+        });
+        
+        if (maxValue === 0) maxValue = 10;
+        
+        // 生成柱状图
+        let html = '';
+        Object.entries(dailyStats).slice(-14).forEach(([date, data]) => {
+            const successHeight = (data.success / maxValue) * 200;
+            const failedHeight = (data.failed / maxValue) * 200;
+            const shortDate = date.slice(5); // MM-DD
+            
+            html += `
+                <div style="flex: 1; text-align: center; min-width: 40px;">
+                    <div style="display: flex; align-items: flex-end; justify-content: center; gap: 2px; height: 220px;">
+                        <div style="width: 18px; background: #28a745; height: ${successHeight}px; border-radius: 3px 3px 0 0;" title="成功: ${data.success}"></div>
+                        <div style="width: 18px; background: #dc3545; height: ${failedHeight}px; border-radius: 3px 3px 0 0;" title="失败: ${data.failed}"></div>
+                    </div>
+                    <div style="font-size: 11px; color: #888; margin-top: 5px;">${shortDate}</div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // 图例
+        container.innerHTML += `
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px; font-size: 12px;">
+                <span><span style="display: inline-block; width: 12px; height: 12px; background: #28a745; border-radius: 2px;"></span> 成功</span>
+                <span><span style="display: inline-block; width: 12px; height: 12px; background: #dc3545; border-radius: 2px;"></span> 失败</span>
+            </div>
+        `;
+    }
+    
+    // 渲染统计
+    function renderStats() {
+        let totalSuccess = 0;
+        let totalFailed = 0;
+        
+        Object.values(dailyStats).forEach(item => {
+            totalSuccess += item.success;
+            totalFailed += item.failed;
+        });
+        
+        document.getElementById('total-success').textContent = totalSuccess;
+        document.getElementById('total-failed').textContent = totalFailed;
+        
+        const total = totalSuccess + totalFailed;
+        const rate = total > 0 ? ((totalSuccess / total) * 100).toFixed(1) + '%' : '-';
+        document.getElementById('success-rate').textContent = rate;
+    }
+    
+    // 渲染失败原因
+    function renderErrorStats() {
+        const container = document.getElementById('error-stats');
+        
+        if (!errorStats || Object.keys(errorStats).length === 0) {
+            container.innerHTML = '<p style="color: #28a745; text-align: center;">暂无失败记录</p>';
+            return;
+        }
+        
+        let html = '<table><thead><tr><th>错误信息</th><th>次数</th></tr></thead><tbody>';
+        
+        Object.entries(errorStats)
+            .sort((a, b) => b[1] - a[1])
+            .forEach(([error, count]) => {
+                html += `<tr><td>${error}</td><td style="color: #dc3545; font-weight: bold;">${count}</td></tr>`;
+            });
+        
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+    
+    // 初始化
+    renderTrendChart();
+    renderStats();
+    renderErrorStats();
+</script>
+
+<style>
+    #error-stats table {
+        width: 100%;
+    }
+    #error-stats th, #error-stats td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+</style>
+{% endblock %}

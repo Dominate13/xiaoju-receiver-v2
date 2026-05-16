@@ -1,0 +1,111 @@
+{% extends "admin/base.html" %}
+
+{% block title %}记录详情 - 小桔充电管理后台{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>记录详情</h2>
+    
+    <a href="/admin/" style="color: #667eea; text-decoration: none; margin-bottom: 15px; display: inline-block;">
+        ← 返回列表
+    </a>
+    
+    <table style="margin-top: 15px;">
+        <tr>
+            <th style="width: 150px;">ID</th>
+            <td>{{ record.id }}</td>
+        </tr>
+        <tr>
+            <th>订单号</th>
+            <td>{{ record.start_charge_seq }}</td>
+        </tr>
+        <tr>
+            <th>外部订单号</th>
+            <td>{{ record.out_start_charge_seq or '-' }}</td>
+        </tr>
+        <tr>
+            <th>电站</th>
+            <td>{{ record.station_name or '-' }} ({{ record.station_id or '-' }})</td>
+        </tr>
+        <tr>
+            <th>充电枪</th>
+            <td>{{ record.connector_name or '-' }} ({{ record.connector_id or '-' }})</td>
+        </tr>
+        <tr>
+            <th>开始时间</th>
+            <td>{{ record.start_time or '-' }}</td>
+        </tr>
+        <tr>
+            <th>结束时间</th>
+            <td>{{ record.end_time or '-' }}</td>
+        </tr>
+        <tr>
+            <th>总电量(kWh)</th>
+            <td>{{ record.total_power or '-' }}</td>
+        </tr>
+        <tr>
+            <th>电费(元)</th>
+            <td>{{ record.total_elec_money or '-' }}</td>
+        </tr>
+        <tr>
+            <th>服务费(元)</th>
+            <td>{{ record.total_svc_money or '-' }}</td>
+        </tr>
+        <tr>
+            <th>总金额(元)</th>
+            <td>{{ record.total_money or '-' }}</td>
+        </tr>
+        <tr>
+            <th>用户</th>
+            <td>{{ record.user_name or '-' }} ({{ record.user_id or '-' }})</td>
+        </tr>
+        <tr>
+            <th>手机号</th>
+            <td>{{ record.user_tel or '-' }}</td>
+        </tr>
+        <tr>
+            <th>车牌号</th>
+            <td>{{ record.plate_no or '-' }}</td>
+        </tr>
+        <tr>
+            <th>VIN</th>
+            <td>{{ record.vin or '-' }}</td>
+        </tr>
+        <tr>
+            <th>开始SOC</th>
+            <td>{{ record.start_soc or '-' }}%</td>
+        </tr>
+        <tr>
+            <th>结束SOC</th>
+            <td>{{ record.end_soc or '-' }}%</td>
+        </tr>
+        <tr>
+            <th>接收时间</th>
+            <td>{{ record.received_at or '-' }}</td>
+        </tr>
+        <tr>
+            <th>同步状态</th>
+            <td>
+                <span class="status status-{{ record.sync_status }}">
+                    {% if record.sync_status == 'pending_sync' %}待同步
+                    {% elif record.sync_status == 'synced' %}已同步
+                    {% elif record.sync_status == 'failed' %}失败
+                    {% else %}{{ record.sync_status }}{% endif %}
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <th>同步时间</th>
+            <td>{{ record.sync_at or '-' }}</td>
+        </tr>
+        <tr>
+            <th>同步错误</th>
+            <td style="color: #dc3545;">{{ record.sync_error or '-' }}</td>
+        </tr>
+        <tr>
+            <th>推送次数</th>
+            <td>{{ record.push_count }}</td>
+        </tr>
+    </table>
+</div>
+{% endblock %}

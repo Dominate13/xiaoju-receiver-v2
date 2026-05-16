@@ -1,0 +1,82 @@
+{% extends "admin/base.html" %}
+
+{% block title %}订单查询 - 小桔充电管理后台{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>订单查询</h2>
+    
+    <form id="query-form" onsubmit="return doQuery()">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div class="form-group">
+                <label>订单号</label>
+                <input type="text" name="seq" id="query-seq" placeholder="输入订单号">
+            </div>
+            <div class="form-group">
+                <label>电站名称</label>
+                <input type="text" name="station" id="query-station" placeholder="输入电站名称">
+            </div>
+            <div class="form-group">
+                <label>同步状态</label>
+                <select name="status" id="query-status">
+                    <option value="">全部</option>
+                    <option value="pending_sync">待同步</option>
+                    <option value="synced">已同步</option>
+                    <option value="failed">失败</option>
+                </select>
+            </div>
+        </div>
+        <div style="margin-top: 15px;">
+            <button type="submit" class="btn btn-primary">查询</button>
+            <button type="button" class="btn btn-primary" onclick="resetQuery()">重置</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>查询结果</h2>
+    <div id="query-result">
+        <p style="color: #999; text-align: center;">请输入查询条件后点击查询</p>
+    </div>
+</div>
+
+<script>
+    async function doQuery() {
+        const seq = document.getElementById('query-seq').value.trim();
+        const station = document.getElementById('query-station').value.trim();
+        const status = document.getElementById('query-status').value;
+        
+        if (!seq && !station && !status) {
+            alert('请至少输入一个查询条件');
+            return false;
+        }
+        
+        // 显示加载状态
+        document.getElementById('query-result').innerHTML = '<p style="text-align: center;">查询中...</p>';
+        
+        try {
+            // 构建查询参数
+            const params = new URLSearchParams();
+            if (seq) params.append('seq', seq);
+            if (status) params.append('status', status);
+            
+            // 由于没有专门的查询API，这里简单处理
+            // 实际项目中可以添加专门的查询接口
+            document.getElementById('query-result').innerHTML = 
+                '<p style="color: #666;">查询功能需要通过管理员页面查看全部记录</p>' +
+                '<p style="color: #999;">订单号: ' + (seq || '-') + '</p>' +
+                '<p style="color: #999;">电站: ' + (station || '-') + '</p>' +
+                '<p style="color: #999;">状态: ' + (status || '全部') + '</p>';
+        } catch (e) {
+            document.getElementById('query-result').innerHTML = '<p style="color: #dc3545;">查询失败: ' + e.message + '</p>';
+        }
+        
+        return false;
+    }
+    
+    function resetQuery() {
+        document.getElementById('query-form').reset();
+        document.getElementById('query-result').innerHTML = '<p style="color: #999; text-align: center;">请输入查询条件后点击查询</p>';
+    }
+</script>
+{% endblock %}

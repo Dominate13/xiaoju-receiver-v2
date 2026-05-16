@@ -1,0 +1,118 @@
+{% extends "admin/base.html" %}
+
+{% block title %}推送记录 - 小桔充电管理后台{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ stats.total }}</div>
+        <div class="label">总记录数</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.pending }}</div>
+        <div class="label">待同步</div>
+    </div>
+    <div class="stat-card success">
+        <div class="number">{{ stats.synced }}</div>
+        <div class="label">已同步</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="number">{{ stats.failed }}</div>
+        <div class="label">同步失败</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>推送记录列表</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>订单号</th>
+                <th>电站/充电枪</th>
+                <th>充电时间</th>
+                <th>电量(kWh)</th>
+                <th>金额(元)</th>
+                <th>同步状态</th>
+                <th>接收时间</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>
+                    <a href="/admin/record/{{ record.id }}">{{ record.start_charge_seq[:20] }}...</a>
+                </td>
+                <td>{{ record.station_name or '-' }} / {{ record.connector_name or '-' }}</td>
+                <td>
+                    {% if record.start_time %}{{ record.start_time[:10] }}{% else %}-{% endif %}
+                </td>
+                <td>{{ record.total_power or '-' }}</td>
+                <td>{{ record.total_money or '-' }}</td>
+                <td>
+                    <span class="status status-{{ record.sync_status }}">
+                        {% if record.sync_status == 'pending_sync' %}待同步
+                        {% elif record.sync_status == 'synced' %}已同步
+                        {% elif record.sync_status == 'failed' %}失败
+                        {% else %}{{ record.sync_status }}{% endif %}
+                    </span>
+                </td>
+                <td>{{ record.received_at[:19] if record.received_at else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #999;">暂无推送记录</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>服务日志</h2>
+    <div style="max-height: 200px; overflow-y: auto;">
+        {% for log in service_logs %}
+        <div style="padding: 8px; border-bottom: 1px solid #eee; font-size: 13px;">
+            <span style="color: #999;">{{ log.time[:19] if log.time else '-' }}</span>
+            <span style="padding: 2px 8px; border-radius: 4px; margin-left: 10px;
+                {% if log.level == 'INFO' %}background:#d4edda;color:#155724;
+                {% elif log.level == 'WARNING' %}background:#fff3cd;color:#856404;
+                {% elif log.level == 'ERROR' %}background:#f8d7da;color:#721c24;
+                {% else %}background:#e2e3e5;color:#383d41;{% endif %}">
+                {{ log.level }}
+            </span>
+            <span style="margin-left: 10px;">{{ log.msg }}</span>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: #999; padding: 20px;">暂无服务日志</div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card">
+    <h2>API调用日志</h2>
+    <div style="max-height: 200px; overflow-y: auto;">
+        {% for log in api_logs %}
+        <div style="padding: 8px; border-bottom: 1px solid #eee; font-size: 13px;">
+            <span style="color: #999;">{{ log.time[:19] if log.time else '-' }}</span>
+            <span style="padding: 2px 8px; border-radius: 4px; margin-left: 10px;
+                {% if log.result == 'success' %}background:#d4edda;color:#155724;
+                {% elif log.result == 'failed' %}background:#f8d7da;color:#721c24;
+                {% else %}background:#e2e3e5;color:#383d41;{% endif %}">
+                {{ log.result or 'unknown' }}
+            </span>
+            <span style="margin-left: 10px; color: #007bff;">{{ log.interface }}</span>
+            <span style="margin-left: 10px; color: #666;">{{ log.direction or '-' }}</span>
+            {% if log._folded_count and log._folded_count > 1 %}
+            <span style="margin-left: 10px; color: #ff8c00; font-weight: bold;">(x{{ log._folded_count }})</span>
+            {% endif %}
+            {% if log.error %}
+            <span style="color: #dc3545;">{{ log.error }}</span>
+            {% endif %}
+        </div>
+        {% else %}
+        <div style="text-align: center; color: #999; padding: 20px;">暂无API调用记录</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

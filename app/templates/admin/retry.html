@@ -1,0 +1,91 @@
+{% extends "admin/base.html" %}
+
+{% block title %}一键重试 - 小桔充电管理后台{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>一键重试</h2>
+    <div style="margin-bottom: 20px;">
+        <button class="btn btn-primary" onclick="retryAll()">重试所有失败记录</button>
+        <span id="retry-result" style="margin-left: 20px;"></span>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>订单号</th>
+                <th>电站</th>
+                <th>同步时间</th>
+                <th>错误信息</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="failed-list">
+            {% for record in failed_records %}
+            <tr id="record-{{ record.id }}">
+                <td>{{ record.id }}</td>
+                <td>{{ record.start_charge_seq[:30] }}...</td>
+                <td>{{ record.station_name or '-' }}</td>
+                <td>{{ record.sync_at[:19] if record.sync_at else '-' }}</td>
+                <td class="error-detail">{{ record.sync_error or '-' }}</td>
+                <td>
+                    <button class="btn btn-primary" onclick="retrySingle({{ record.id }})">重试</button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #28a745;">暂无失败记录</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    async function retryAll() {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = '重试中...';
+        
+        try {
+            const resp = await fetch('/admin/sync/retry', { method: 'POST' });
+            const data = await resp.json();
+            
+            document.getElementById('retry-result').innerHTML = 
+                '<span style="color: ' + (data.failed_count === 0 ? '#28a745' : '#dc3545') + ';">' +
+                data.message + '</span>';
+            
+            // 延迟刷新
+            setTimeout(() => location.reload(), 2000);
+        } catch (e) {
+            document.getElementById('retry-result').textContent = '重试失败: ' + e.message;
+            btn.disabled = false;
+            btn.textContent = '重试所有失败记录';
+        }
+    }
+    
+    async function retrySingle(id) {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = '重试中...';
+        
+        try {
+            const resp = await fetch('/admin/sync/retry/' + id, { method: 'POST' });
+            const data = await resp.json();
+            
+            if (data.success_count > 0) {
+                document.getElementById('record-' + id).style.display = 'none';
+            } else {
+                alert(data.message);
+                btn.disabled = false;
+                btn.textContent = '重试';
+            }
+        } catch (e) {
+            alert('重试失败: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = '重试';
+        }
+    }
+</script>
+{% endblock %}

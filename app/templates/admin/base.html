@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}小桔充电管理后台{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+        }
+        .nav a.active {
+            background: #667eea;
+            color: white;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-synced {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-card .label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .stat-card.warning .number {
+            color: #ffc107;
+        }
+        .stat-card.danger .number {
+            color: #dc3545;
+        }
+        .stat-card.success .number {
+            color: #28a745;
+        }
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .pagination {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination a {
+            padding: 8px 12px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .pagination a.active {
+            background: #667eea;
+            color: white;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+        .error-detail {
+            font-size: 12px;
+            color: #999;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>小桔充电管理后台</h1>
+            <p>版本 2.0.0 | 服务端口: 8521</p>
+        </div>
+        
+        <div class="nav">
+            <a href="/admin/" class="{% if request.url.path == '/admin/' %}active{% endif %}">推送记录</a>
+            <a href="/admin/dashboard" class="{% if request.url.path == '/admin/dashboard' %}active{% endif %}">实时看板</a>
+            <a href="/admin/station_mapping" class="{% if request.url.path == '/admin/station_mapping' %}active{% endif %}">映射管理</a>
+            <a href="/admin/retry" class="{% if request.url.path == '/admin/retry' %}active{% endif %}">一键重试</a>
+            <a href="/admin/query" class="{% if request.url.path == '/admin/query' %}active{% endif %}">订单查询</a>
+            <a href="/admin/stats" class="{% if request.url.path == '/admin/stats' %}active{% endif %}">统计报表</a>
+        </div>
+        
+        {% block content %}{% endblock %}
+        
+        <div class="footer">
+            <p>小桔充电推送接收服务 v2.0.0</p>
+        </div>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

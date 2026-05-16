@@ -1,0 +1,249 @@
+{% extends "admin/base.html" %}
+
+{% block title %}映射管理 - 小桔充电管理后台{% endblock %}
+
+{% block content %}
+{% if message %}
+<div class="alert" style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+    {{ message }}
+</div>
+{% endif %}
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>充电站-充电枪映射管理</h2>
+        <div style="display: flex; gap: 10px;">
+            <form method="post" action="/admin/station_mapping/export" style="display: inline;">
+                <button type="submit" class="btn" style="background: #17a2b8; color: white; padding: 8px 16px;">导出数据 (CSV)</button>
+            </form>
+        </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px;">
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+            <h3 style="color: #333; margin-bottom: 15px; font-size: 16px;">添加充电站</h3>
+            <form method="post" action="/admin/station_mapping/station/add">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">充电站名称 <span style="color: red;">*</span></label>
+                    <input type="text" name="station_name" required placeholder="请输入充电站名称" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">充电站描述</label>
+                    <textarea name="station_description" placeholder="请输入充电站描述" rows="2" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 10px;">添加充电站</button>
+            </form>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+            <h3 style="color: #333; margin-bottom: 15px; font-size: 16px;">导入数据</h3>
+            <form method="post" action="/admin/station_mapping/import" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">选择CSV文件 <span style="color: red;">*</span></label>
+                    <input type="file" name="file" accept=".csv" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 10px;">导入数据</button>
+                <p style="font-size: 12px; color: #666; margin-top: 10px; line-height: 1.5;">
+                    CSV格式：<br>
+                    <code style="background: #fff; padding: 2px 4px; border-radius: 2px;">充电站名称,充电枪编码,充电枪名称(可选)</code>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>充电站列表</h3>
+        <span style="color: #666; font-size: 14px;">共 {{ stations | length }} 个充电站</span>
+    </div>
+    
+    {% if stations %}
+        {% for station in stations %}
+        <div style="border: 1px solid #e9ecef; border-radius: 10px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleStation('station-{{ station.id }}')">
+                <div>
+                    <strong style="font-size: 16px; color: white;">{{ station.name }}</strong>
+                    {% if station.description %}
+                    <span style="margin-left: 10px; color: rgba(255,255,255,0.8); font-size: 14px;">- {{ station.description }}</span>
+                    {% endif %}
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <span style="color: rgba(255,255,255,0.9); font-size: 13px;">{{ station.connectors | length }} 个充电枪</span>
+                    <span id="icon-{{ station.id }}" style="font-size: 16px; color: white; transition: transform 0.3s;">▼</span>
+                </div>
+            </div>
+            
+            <div id="station-{{ station.id }}" style="padding: 20px; background: #fff;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h4 style="color: #333; font-size: 15px;">充电枪列表</h4>
+                    <button class="btn btn-primary" onclick="showAddConnectorForm({{ station.id }}); return false;" style="padding: 6px 14px;">+ 添加充电枪</button>
+                </div>
+                
+                <div id="add-form-{{ station.id }}" style="display: none; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                    <h5 style="color: #333; margin-bottom: 15px;">添加充电枪</h5>
+                    <form method="post" action="/admin/station_mapping/connector/add/{{ station.id }}">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 500;">充电枪编码 <span style="color: red;">*</span></label>
+                                <input type="text" name="connector_code" required placeholder="请输入充电枪编码" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-weight: 500;">充电枪名称</label>
+                                <input type="text" name="connector_name" placeholder="请输入充电枪名称" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button type="submit" class="btn btn-primary">确认添加</button>
+                            <button type="button" class="btn" style="background: #6c757d; color: white;" onclick="hideAddConnectorForm({{ station.id }}); return false;">取消</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e9ecef; color: #495057; font-weight: 600; width: 30%;">充电枪编码</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e9ecef; color: #495057; font-weight: 600; width: 30%;">充电枪名称</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e9ecef; color: #495057; font-weight: 600; width: 25%;">创建时间</th>
+                            <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e9ecef; color: #495057; font-weight: 600; width: 15%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for connector in station.connectors %}
+                        <tr style="border-bottom: 1px solid #e9ecef; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                            <td style="padding: 12px;">
+                                <span style="font-weight: 500;">{{ connector.code }}</span>
+                                {% if connector.name %}
+                                <span style="margin-left: 8px; color: #666; font-size: 13px;">({{ connector.name }})</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px;">{{ connector.name or '-' }}</td>
+                            <td style="padding: 12px; color: #666; font-size: 13px;">{{ connector.created_at.strftime('%Y-%m-%d %H:%M') if connector.created_at else '-' }}</td>
+                            <td style="padding: 12px; text-align: center;">
+                                <button class="btn" style="background: #ffc107; color: #333; padding: 5px 12px; font-size: 12px; margin-right: 5px;" onclick="showEditConnectorForm({{ connector.id }}, '{{ connector.code }}', '{{ connector.name or '' }}'); return false;">修改</button>
+                                <form method="post" action="/admin/station_mapping/connector/delete/{{ connector.id }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger" style="padding: 5px 12px; font-size: 12px;" onclick="return confirm('确定要删除这个充电枪吗？')">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="padding: 30px; text-align: center; color: #999;">
+                                <p>该充电站暂无充电枪</p>
+                                <p style="font-size: 13px; margin-top: 5px;">点击上方"添加充电枪"按钮添加</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ddd;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" style="background: #ffc107; color: #333; padding: 8px 16px;" onclick="showEditStationForm({{ station.id }}); return false;">修改充电站</button>
+                        <form method="post" action="/admin/station_mapping/station/delete/{{ station.id }}" style="display: inline;">
+                            <button type="submit" class="btn btn-danger" style="padding: 8px 16px;" onclick="return confirm('确定要删除这个充电站吗？删除后其下所有充电枪将被一并删除。')">删除充电站</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="edit-station-modal-{{ station.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+            <div style="background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                <h3 style="color: #333; margin-bottom: 20px;">修改充电站</h3>
+                <form method="post" action="/admin/station_mapping/station/edit/{{ station.id }}">
+                    <div class="form-group">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">充电站名称 <span style="color: red;">*</span></label>
+                        <input type="text" name="station_name" value="{{ station.name }}" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">充电站描述</label>
+                        <textarea name="station_description" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;">{{ station.description or '' }}</textarea>
+                    </div>
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary">确认修改</button>
+                        <button type="button" class="btn" style="background: #6c757d; color: white;" onclick="hideEditStationForm({{ station.id }}); return false;">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: #999;">
+            <div style="font-size: 48px; margin-bottom: 20px;">🔌</div>
+            <p style="font-size: 16px;">暂无充电站</p>
+            <p style="font-size: 14px; margin-top: 5px;">请先添加充电站，然后在充电站下添加充电枪</p>
+        </div>
+    {% endif %}
+</div>
+
+<div id="edit-connector-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+    <div style="background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <h3 style="color: #333; margin-bottom: 20px;">修改充电枪</h3>
+        <form method="post" action="/admin/station_mapping/connector/edit/" id="edit-connector-form">
+            <input type="hidden" id="connector-id" name="connector_id">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">充电枪编码 <span style="color: red;">*</span></label>
+                <input type="text" name="connector_code" id="connector-code" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">充电枪名称</label>
+                <input type="text" name="connector_name" id="connector-name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary">确认修改</button>
+                <button type="button" class="btn" style="background: #6c757d; color: white;" onclick="hideEditConnectorForm(); return false;">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleStation(id) {
+    var element = document.getElementById(id);
+    var icon = document.getElementById('icon-' + id.replace('station-', ''));
+    if (element.style.display === 'none') {
+        element.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+    } else {
+        element.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+    }
+}
+
+function showAddConnectorForm(stationId) {
+    document.getElementById('add-form-' + stationId).style.display = 'block';
+}
+
+function hideAddConnectorForm(stationId) {
+    document.getElementById('add-form-' + stationId).style.display = 'none';
+}
+
+function showEditStationForm(stationId) {
+    document.getElementById('edit-station-modal-' + stationId).style.display = 'flex';
+}
+
+function hideEditStationForm(stationId) {
+    document.getElementById('edit-station-modal-' + stationId).style.display = 'none';
+}
+
+function showEditConnectorForm(connectorId, code, name) {
+    document.getElementById('connector-id').value = connectorId;
+    document.getElementById('connector-code').value = code;
+    document.getElementById('connector-name').value = name;
+    document.getElementById('edit-connector-form').action = '/admin/station_mapping/connector/edit/' + connectorId;
+    document.getElementById('edit-connector-modal').style.display = 'flex';
+}
+
+function hideEditConnectorForm() {
+    document.getElementById('edit-connector-modal').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% for station in stations %}
+    document.getElementById('station-{{ station.id }}').style.display = 'block';
+    {% endfor %}
+});
+</script>
+{% endblock %}
